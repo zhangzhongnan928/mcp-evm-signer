@@ -84,7 +84,8 @@ export async function loadWallet(address: string): Promise<ethers.Wallet | null>
       if (!keyData.encryptedData) {
         throw new Error(`Encrypted wallet missing encryptedData: ${address}`);
       }
-      return await ethers.Wallet.fromEncryptedJson(keyData.encryptedData, config.keys.password);
+      // Type assertion to make TypeScript happy
+      return ethers.Wallet.fromEncryptedJson(keyData.encryptedData, config.keys.password) as Promise<ethers.Wallet>;
     } else {
       if (!keyData.privateKey) {
         throw new Error(`Wallet missing privateKey: ${address}`);
@@ -101,7 +102,8 @@ export async function loadWallet(address: string): Promise<ethers.Wallet | null>
  * Create a new random wallet
  */
 export function createWallet(): ethers.Wallet {
-  return ethers.Wallet.createRandom();
+  // Type assertion to ensure we get a Wallet type
+  return ethers.Wallet.createRandom() as ethers.Wallet;
 }
 
 /**
