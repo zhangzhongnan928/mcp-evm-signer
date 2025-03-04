@@ -1,0 +1,47 @@
+{
+  "name": "mcp-evm-signer",
+  "version": "1.0.0",
+  "description": "MCP server for managing EVM keys and deploying smart contracts via Infura",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc && node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "mcp-evm-signer": "./build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhangzhongnan928/mcp-evm-signer.git"
+  },
+  "keywords": [
+    "ethereum",
+    "evm",
+    "mcp",
+    "model-context-protocol",
+    "infura",
+    "smart-contracts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zhangzhongnan928/mcp-evm-signer/issues"
+  },
+  "homepage": "https://github.com/zhangzhongnan928/mcp-evm-signer#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.9.0",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.2"
+  }
+}
