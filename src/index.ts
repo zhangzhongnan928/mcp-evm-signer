@@ -6,6 +6,58 @@ import * as crypto from './crypto.js';
 import * as ethereum from './ethereum.js';
 import config from './config.js';
 
+// Define interface types for the tool handlers
+interface CreateWalletParams {}
+
+interface ImportWalletParams {
+  privateKey: string;
+}
+
+interface ListWalletsParams {}
+
+interface CheckBalanceParams {
+  address: string;
+  network?: string;
+}
+
+interface GetTransactionsParams {
+  address: string;
+  limit?: number;
+  network?: string;
+}
+
+interface SendTransactionParams {
+  fromAddress: string;
+  toAddress: string;
+  amount: string;
+  network?: string;
+}
+
+interface DeployContractParams {
+  fromAddress: string;
+  abi: string;
+  bytecode: string;
+  constructorArgs?: string;
+  network?: string;
+}
+
+interface CallContractParams {
+  contractAddress: string;
+  abi: string;
+  method: string;
+  args?: string;
+  network?: string;
+}
+
+interface ExecuteContractParams {
+  fromAddress: string;
+  contractAddress: string;
+  abi: string;
+  method: string;
+  args?: string;
+  network?: string;
+}
+
 async function main() {
   console.error('Starting MCP EVM Signer server...');
 
@@ -22,7 +74,7 @@ async function main() {
     'create-wallet',
     'Create a new Ethereum wallet',
     {},
-    async () => {
+    async ({}: CreateWalletParams) => {
       try {
         const wallet = crypto.createWallet();
         await crypto.saveWallet(wallet);
@@ -56,7 +108,7 @@ async function main() {
     {
       privateKey: z.string().describe('Private key (with or without 0x prefix)')
     },
-    async ({ privateKey }) => {
+    async ({ privateKey }: ImportWalletParams) => {
       try {
         const wallet = crypto.importWallet(privateKey);
         await crypto.saveWallet(wallet);
@@ -87,7 +139,7 @@ async function main() {
     'list-wallets',
     'List all saved wallets',
     {},
-    async () => {
+    async ({}: ListWalletsParams) => {
       try {
         const addresses = await crypto.getWalletAddresses();
         
@@ -122,7 +174,7 @@ async function main() {
       address: z.string().describe('Ethereum address (0x format)'),
       network: z.string().optional().describe('Network name (e.g. mainnet, goerli, sepolia)')
     },
-    async ({ address, network }) => {
+    async ({ address, network }: CheckBalanceParams) => {
       try {
         const balance = await ethereum.checkBalance(
           address,
@@ -160,7 +212,7 @@ async function main() {
       limit: z.number().optional().describe('Number of transactions to return (max 100)'),
       network: z.string().optional().describe('Network name (e.g. mainnet, goerli, sepolia)')
     },
-    async ({ address, limit = 10, network }) => {
+    async ({ address, limit = 10, network }: GetTransactionsParams) => {
       try {
         const transactions = await ethereum.getTransactions(
           address,
@@ -201,7 +253,7 @@ async function main() {
       amount: z.string().describe('Amount of ETH to send'),
       network: z.string().optional().describe('Network name (e.g. mainnet, goerli, sepolia)')
     },
-    async ({ fromAddress, toAddress, amount, network }) => {
+    async ({ fromAddress, toAddress, amount, network }: SendTransactionParams) => {
       try {
         const result = await ethereum.sendTransaction(
           fromAddress,
@@ -244,7 +296,7 @@ async function main() {
       constructorArgs: z.string().optional().describe('Constructor arguments as JSON array'),
       network: z.string().optional().describe('Network name (e.g. mainnet, goerli, sepolia)')
     },
-    async ({ fromAddress, abi, bytecode, constructorArgs, network }) => {
+    async ({ fromAddress, abi, bytecode, constructorArgs, network }: DeployContractParams) => {
       try {
         let parsedAbi;
         try {
@@ -253,7 +305,7 @@ async function main() {
           throw new Error('Invalid ABI JSON');
         }
         
-        let parsedArgs = [];
+        let parsedArgs: any[] = [];
         if (constructorArgs) {
           try {
             parsedArgs = JSON.parse(constructorArgs);
@@ -308,7 +360,7 @@ async function main() {
       args: z.string().optional().describe('Method arguments as JSON array'),
       network: z.string().optional().describe('Network name (e.g. mainnet, goerli, sepolia)')
     },
-    async ({ contractAddress, abi, method, args, network }) => {
+    async ({ contractAddress, abi, method, args, network }: CallContractParams) => {
       try {
         let parsedAbi;
         try {
@@ -317,7 +369,7 @@ async function main() {
           throw new Error('Invalid ABI JSON');
         }
         
-        let parsedArgs = [];
+        let parsedArgs: any[] = [];
         if (args) {
           try {
             parsedArgs = JSON.parse(args);
@@ -383,7 +435,7 @@ async function main() {
       args: z.string().optional().describe('Method arguments as JSON array'),
       network: z.string().optional().describe('Network name (e.g. mainnet, goerli, sepolia)')
     },
-    async ({ fromAddress, contractAddress, abi, method, args, network }) => {
+    async ({ fromAddress, contractAddress, abi, method, args, network }: ExecuteContractParams) => {
       try {
         let parsedAbi;
         try {
@@ -392,7 +444,7 @@ async function main() {
           throw new Error('Invalid ABI JSON');
         }
         
-        let parsedArgs = [];
+        let parsedArgs: any[] = [];
         if (args) {
           try {
             parsedArgs = JSON.parse(args);
