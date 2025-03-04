@@ -158,10 +158,10 @@ export async function deployContract(
   // Deploy the contract
   const contract = await factory.deploy(...constructorArgs);
   await contract.waitForDeployment();
+  const contractAddress = await contract.getAddress();
   
   const receipt = await contract.deploymentTransaction()?.wait();
   const deploymentHash = receipt?.hash || '';
-  const contractAddress = await contract.getAddress();
   
   // Get the network-specific explorer URL
   let explorerUrl = '';
@@ -187,38 +187,76 @@ export async function deployContract(
 }
 
 /**
- * Call a contract method
+ * Call a contract method (read-only)
  */
-export async function callContract(
+export async function callContractMethod(
   contractAddress: string,
   abi: any[],
   methodName: string,
   methodArgs: any[] = [],
-  fromAddress?: string,
   network: string = config.infura.defaultNetwork
 ): Promise<any> {
-  // Create a contract instance
-  let contractInstance;
+  const provider = getProvider(network);
+  const contract = new ethers.Contract(contractAddress, abi, provider);
   
-  if (fromAddress) {
-    // With signer (can make state changes)
-    const signer = await getSigner(fromAddress, network);
-    if (!signer) {
-      throw new Error(`Unable to load wallet for address ${fromAddress}`);
-    }
-    contractInstance = new ethers.Contract(contractAddress, abi, signer);
-  } else {
-    // Read-only
-    const provider = getProvider(network);
-    contractInstance = new ethers.Contract(contractAddress, abi, provider);
+  return await contract[methodName](...methodArgs);
+}
+
+/**
+ * Execute a contract method (write)
+ */
+export async function executeContractMethod(
+  fromAddress: string,
+  contractAddress: string,
+  abi: any[],
+  methodName: string,
+  methodArgs: any[] = [],
+  network: string = config.infura.defaultNetwork
+): Promise<{
+  hash: string;
+  explorer: string;
+}> {
+  const signer = await getSigner(fromAddress, network);
+  if (!signer) {
+    throw new Error(`Unable to load wallet for address ${fromAddress}`);
   }
   
-  // Check if the method exists
-  if (typeof contractInstance[methodName] !== 'function') {
-    throw new Error(`Method ${methodName} does not exist on contract`);
+  const contract = new ethers.Contract(contractAddress, abi, signer);
+  const tx = await contract[methodName](...methodArgs);
+  await tx.wait();
+  
+  // Get the network-specific explorer URL
+  let explorerUrl = '';
+  switch (network) {
+    case 'mainnet':
+      explorerUrl = 'https://etherscan.io/tx/';
+      break;
+    case 'goerli':
+      explorerUrl = 'https://goerli.etherscan.io/tx/';
+      break;
+    case 'sepolia':
+      explorerUrl = 'https://sepolia.etherscan.io/tx/';
+      break;
+    default:
+      explorerUrl = 'https://etherscan.io/tx/';
   }
   
-  // Call the method
-  const result = await contractInstance[methodName](...methodArgs);
-  return result;
+  return {
+    hash: tx.hash,
+    explorer: `${explorerUrl}${tx.hash}`
+  };
+}
+
+/**
+ * Compile Solidity source code
+ * This is a simple wrapper for future implementation
+ * In a production app, this would use solc or similar
+ */
+export async function compileSolidity(source: string): Promise<{
+  abi: any[];
+  bytecode: string;
+}> {
+  // For demonstration purposes only - this would normally use solc
+  // This is a placeholder
+  throw new Error('Solidity compilation not implemented yet. Please provide compiled ABI and bytecode.');
 }
