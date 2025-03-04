@@ -68,19 +68,38 @@ export async function getTransactions(
     if (!block || !block.transactions) continue;
     
     for (const tx of block.transactions) {
+      // Handle both string type and object type transactions for compatibility
+      const txFrom = typeof tx === 'string' ? '' : (tx.from || '');
+      const txTo = typeof tx === 'string' ? '' : (tx.to || '');
+      
       if (
-        (tx.from && tx.from.toLowerCase() === normalizedAddress) ||
-        (tx.to && tx.to.toLowerCase() === normalizedAddress)
+        (txFrom.toLowerCase && txFrom.toLowerCase() === normalizedAddress) ||
+        (txTo.toLowerCase && txTo.toLowerCase() === normalizedAddress)
       ) {
-        transactions.push({
-          hash: tx.hash,
-          from: tx.from,
-          to: tx.to,
-          value: tx.value ? ethers.formatEther(tx.value) : '0',
-          blockNumber: tx.blockNumber,
-          timestamp: block.timestamp,
-          // Add more tx details as needed
-        });
+        if (typeof tx === 'string') {
+          // If tx is just a transaction hash, fetch the full transaction
+          const fullTx = await provider.getTransaction(tx);
+          if (fullTx) {
+            transactions.push({
+              hash: fullTx.hash,
+              from: fullTx.from,
+              to: fullTx.to,
+              value: fullTx.value ? ethers.formatEther(fullTx.value) : '0',
+              blockNumber: fullTx.blockNumber,
+              timestamp: block.timestamp,
+            });
+          }
+        } else {
+          // If tx is already a full transaction object
+          transactions.push({
+            hash: tx.hash,
+            from: tx.from || '',
+            to: tx.to || '',
+            value: tx.value ? ethers.formatEther(tx.value) : '0',
+            blockNumber: tx.blockNumber,
+            timestamp: block.timestamp,
+          });
+        }
         
         if (transactions.length >= limit) {
           return transactions;
@@ -245,18 +264,4 @@ export async function executeContractMethod(
     hash: tx.hash,
     explorer: `${explorerUrl}${tx.hash}`
   };
-}
-
-/**
- * Compile Solidity source code
- * This is a simple wrapper for future implementation
- * In a production app, this would use solc or similar
- */
-export async function compileSolidity(source: string): Promise<{
-  abi: any[];
-  bytecode: string;
-}> {
-  // For demonstration purposes only - this would normally use solc
-  // This is a placeholder
-  throw new Error('Solidity compilation not implemented yet. Please provide compiled ABI and bytecode.');
 }
